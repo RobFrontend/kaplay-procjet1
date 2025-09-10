@@ -1,0 +1,10 @@
+body {
+  background-color: #fff;
+}
+
+.game-box {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
