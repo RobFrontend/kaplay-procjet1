@@ -7,4 +7,30 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  position: relative;
+}
+
+.abs-box {
+  position: absolute;
+  z-index: 999;
+  color: orangered;
+  font-weight: 700;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffffd5;
+  padding: 80px;
+}
+
+.abs-box button {
+  background-color: green;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 7px;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+.abs-box li {
+  font-size: 20px;
 }

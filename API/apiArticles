@@ -1,0 +1,10 @@
+import supabase from "./supabase";
+
+export async function getArticles() {
+  const { data, error } = await supabase.from("articles").select("*");
+  if (error) {
+    console.log(error);
+    throw new Error("Artykuł nie mógł zostać wczytany");
+  }
+  return data;
+}

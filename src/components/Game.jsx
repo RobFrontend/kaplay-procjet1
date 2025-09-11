@@ -1,8 +1,12 @@
 import kaboom from "kaboom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useArticles } from "./useArticles";
 
-function Game() {
+function Game({ isOpen }) {
   const canvasRef = useRef(null);
+  let { data } = useArticles();
+
+  const title1 = data && data[0].title;
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -16,6 +20,12 @@ function Game() {
       });
 
       k.loadBean();
+
+      let textTest = k.add([
+        k.text(`${data && data[0].title}`),
+        k.pos(k.center()),
+        k.color(255, 255, 255),
+      ]);
 
       k.add([
         k.rect(1200, 20),
@@ -67,13 +77,20 @@ function Game() {
         k.area(),
         "btn1",
       ]);
+      let textWindow = k.add([
+        k.text("Full Screen"),
+        k.pos(1050, 20),
+        k.scale(0.5),
+      ]);
 
       k.onClick("btn1", () => {
         if (!k.isFullscreen()) {
           k.setFullscreen();
+          textWindow.text = "X Full Screen";
         }
         if (k.isFullscreen()) {
           k.setFullscreen(false);
+          textWindow.text = "Full Screen";
         }
       });
 
@@ -104,24 +121,32 @@ function Game() {
       player.onCollide("orangebox", () => {
         k.debug.log("touched");
         player.hurt(20);
+        textTest.text = data[1].title;
       });
 
-      k.onKeyDown((key) => {
-        if (key === "right" && !player.dead) {
-          player.move(player.speed, 0);
-        }
-        if (key === "left" && !player.dead) {
-          player.move(-player.speed, 0);
-        }
-      });
-      k.onKeyDown((key) => {
-        if (key === "space" && player.isGrounded()) {
-          player.jump(600);
-        }
-      });
+      if (!isOpen) {
+        k.onKeyDown((key) => {
+          if (key === "right" && !player.dead) {
+            player.move(player.speed, 0);
+          }
+          if (key === "left" && !player.dead) {
+            player.move(-player.speed, 0);
+          }
+        });
+        k.onKeyDown((key) => {
+          if (key === "space" && player.isGrounded()) {
+            player.jump(600);
+          }
+        });
+      }
     }
-  }, []);
-
+  }, [title1, data, isOpen]);
+  if (!data)
+    return (
+      <div>
+        <h1>Loading API</h1>
+      </div>
+    );
   return <canvas ref={canvasRef} />;
 }
 

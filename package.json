@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.87.4",
     "esbuild": "^0.25.9",
     "kaboom": "^3000.1.17",
     "kaplay": "^3001.0.19",
