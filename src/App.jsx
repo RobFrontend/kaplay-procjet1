@@ -19,7 +19,17 @@ function App() {
               <li>{"->"} to go Right</li>
               <li>Space to Jump</li>
             </ul>
-            <button onClick={() => setIsOpen(false)}>OK, Let's Go!</button>
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                setTimeout(() => {
+                  const canvas = document.querySelector("canvas");
+                  canvas?.focus();
+                }, 0);
+              }}
+            >
+              OK, Let's Go!
+            </button>
           </div>
         )}
       </div>
