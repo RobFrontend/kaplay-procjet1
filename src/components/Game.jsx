@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useArticles } from "./useArticles";
 import kaplay from "kaplay";
 
@@ -9,7 +9,7 @@ function Game({ isOpen }) {
   const textTestRef = useRef(null);
   const { data } = useArticles();
 
-  // 1. Inicjalizacja gry tylko raz
+  // to let Kaplay be inicialized only one time (there was a bug withour that)
   useEffect(() => {
     if (!canvasRef.current || kaplayRef.current || !data) return;
 
@@ -25,7 +25,7 @@ function Game({ isOpen }) {
 
     k.loadBean();
 
-    // tekst
+    // text
     const textTest = k.add([
       k.text(data[0].title),
       k.pos(k.center()),
@@ -33,7 +33,7 @@ function Game({ isOpen }) {
     ]);
     textTestRef.current = textTest;
 
-    // podłogi / ściany
+    // floor and wall  closed scene to not let player go outside of the map-  will change it later)
     k.add([
       k.rect(1200, 20),
       k.pos(0, 700),
@@ -53,7 +53,7 @@ function Game({ isOpen }) {
       k.body({ isStatic: true }),
     ]);
 
-    // przeszkoda
+    // obstacle
     setTimeout(() => {
       k.add([
         k.rect(60, 60),
@@ -73,8 +73,14 @@ function Game({ isOpen }) {
       k.scale(0.5),
     ]);
     k.onClick("btn1", () => {
-      k.setFullscreen(!k.isFullscreen());
-      textWindow.text = k.isFullscreen() ? "X Full Screen" : "Full Screen";
+      if (!k.isFullscreen()) {
+        k.setFullscreen();
+        textWindow.text = "X Full Screen";
+      }
+      if (k.isFullscreen()) {
+        k.setFullscreen(false);
+        textWindow.text = "Full Screen";
+      }
     });
 
     // player
@@ -97,28 +103,16 @@ function Game({ isOpen }) {
     });
   }, [data]);
 
-  // 2. Sterowanie zależne od isOpen
+  // 2. Controls
   useEffect(() => {
     const k = kaplayRef.current;
     const player = playerRef.current;
     if (!k || !player) return;
 
     if (!isOpen) {
-      k.onKeyDown((key) => {
-        if (key === "right") {
-          !player.dead && player.move(player.speed, 0);
-        }
-      });
-      k.onKeyDown((key) => {
-        if (key === "left") {
-          !player.dead && player.move(-player.speed, 0);
-        }
-      });
-      k.onKeyDown((key) => {
-        if (key === "space") {
-          player.isGrounded() && player.jump(600);
-        }
-      });
+      k.onKeyDown("right", () => !player.dead && player.move(player.speed, 0));
+      k.onKeyDown("left", () => !player.dead && player.move(-player.speed, 0));
+      k.onKeyDown("space", () => player.isGrounded() && player.jump(600));
     }
   }, [isOpen]);
 
