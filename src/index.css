@@ -1,6 +1,7 @@
 body {
   background-color: #fff;
-  background-image: url("/sushibg.webp");
+  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3)),
+    url("/sushibg.webp");
   background-position: center;
   background-size: cover;
 }
