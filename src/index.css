@@ -1,5 +1,8 @@
 body {
   background-color: #fff;
+  background-image: url("sushibg.webp");
+  background-position: center;
+  background-size: cover;
 }
 
 .game-box {

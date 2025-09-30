@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useArticles } from "./useArticles";
+
 import kaplay from "kaplay";
 
 function Game({ isOpen }) {
@@ -7,8 +7,10 @@ function Game({ isOpen }) {
   const kaplayRef = useRef(null);
   const playerRef = useRef(null);
   const textTestRef = useRef(null);
-  const { data } = useArticles();
-  const [isJumpPower, setIsJumpPower] = useState(600);
+
+  const txt = "siemka";
+
+  const [isJumpPower, setIsJumpPower] = useState(800);
   const [isPlayerSpeed, setIsPlayerSpeed] = useState(150);
 
   // to let Kaplay be inicialized only one time (there was a bug withour that)
@@ -20,14 +22,15 @@ function Game({ isOpen }) {
     playerSpeedRef.current = isPlayerSpeed;
   }, [isJumpPower, isPlayerSpeed]);
   useEffect(() => {
-    if (!canvasRef.current || kaplayRef.current || !data) return;
+    if (!canvasRef.current || kaplayRef.current) return;
 
     const k = kaplay({
       global: true,
       width: 1200,
       height: 720,
       canvas: canvasRef.current,
-      background: [0, 0, 0],
+      // background: [0,0,0],
+
       scale: 1,
     });
     kaplayRef.current = k;
@@ -36,7 +39,7 @@ function Game({ isOpen }) {
 
     // text
     const textTest = k.add([
-      k.text(data[0].title),
+      k.text(txt),
       k.pos(k.center()),
       k.color(255, 255, 255),
     ]);
@@ -44,76 +47,19 @@ function Game({ isOpen }) {
 
     // floor and wall  closed scene to not let player go outside of the map-  will change it later)
     k.add([
-      k.rect(1200, 20),
+      k.rect(3000, 20),
       k.pos(0, 700),
       k.area(),
       k.body({ isStatic: true }),
     ]);
-    k.add([
-      k.rect(20, 720),
-      k.pos(-20, 0),
-      k.area(),
-      k.body({ isStatic: true }),
-    ]);
-    k.add([
-      k.rect(20, 720),
-      k.pos(1200, 0),
-      k.area(),
-      k.body({ isStatic: true }),
-    ]);
 
-    // obstacles with bonuses
-    setTimeout(() => {
-      const boxjump = k.add([
-        k.rect(60, 60),
-        k.pos(500, 500),
-        k.color(125, 125, 0),
-        k.area(),
-        k.body(),
-        k.anchor("center"),
-        "orangebox",
-      ]);
-
-      boxjump.add([
-        k.text("+jump 5sec", { size: 16 }),
-        k.color(255, 255, 255),
-        k.anchor("center"),
-      ]);
-    }, 2000);
-
-    setTimeout(() => {
-      const boxspeed = k.add([
-        k.rect(60, 60),
-        k.pos(200, 200),
-        k.color(244, 244, 244),
-        k.area(),
-        k.body(),
-        k.anchor("center"),
-        "whitebox",
-      ]);
-      boxspeed.add([
-        k.text("+speed 5sec", { size: 16 }),
-        k.color(186, 0, 0),
-        k.anchor("center"),
-      ]);
-    }, 4000);
-
-    setTimeout(() => {
-      const boxsize = k.add([
-        k.rect(60, 60),
-        k.pos(900, 400),
-        k.color(186, 0, 0),
-        k.area(),
-        k.body({ isStatic: true }),
-        k.anchor("center"),
-        "redbox",
-      ]);
-      boxsize.add([
-        k.text("+size 10sec", { size: 16 }),
-        k.color(255, 255, 255),
-        k.anchor("center"),
-      ]);
-    }, 3000);
+    // // great obstacle
+    // k.add([
+    //   k.rect(20, 720),
+    //   k.pos(1200, 0),
+    //   k.area(),
+    //   k.body({ isStatic: true }),
+    // ]);
 
     // fullscreen button
     const btn1 = k.add([k.rect(10, 10), k.pos(1180, 10), k.area(), "btn1"]);
@@ -142,41 +88,168 @@ function Game({ isOpen }) {
       k.pos(600, 600),
       k.scale(1),
       "player",
-      { dead: false, speed: playerSpeedRef.current },
+      { dead: false, speed: playerSpeedRef.current, lives: 3 },
     ]);
     playerRef.current = player;
 
     k.setGravity(1600);
-
-    player.onCollide("orangebox", () => {
-      player.hurt(20);
-      if (data[1]) textTest.text = data[1].title;
-      setIsJumpPower(1200);
-      setTimeout(() => {
-        setIsJumpPower(600);
-      }, 5000);
-    });
-    player.onCollide("whitebox", () => {
-      setIsPlayerSpeed(450);
-      setTimeout(() => {
-        setIsPlayerSpeed(150);
-      }, 5000);
-    });
-    player.onCollide("redbox", () => {
-      player.scaleTo(2);
-      setTimeout(() => {
-        player.scaleTo(1);
-      }, 2500);
-    });
-  }, [data, isJumpPower, isPlayerSpeed]);
+  }, [isJumpPower, isPlayerSpeed, isOpen]);
 
   // 2. Controls
   useEffect(() => {
     const k = kaplayRef.current;
     const player = playerRef.current;
     if (!k || !player) return;
+    k.onUpdate(() => {
+      if (!player) return;
+
+      player.pos.x = Math.max(0, Math.min(player.pos.x, 1150));
+      player.pos.y = Math.max(0, Math.min(player.pos.y, 720));
+    });
 
     if (!isOpen) {
+      const livesLabel = k.add([
+        k.text("Lives: 3", { size: 24 }),
+        k.pos(20, 20),
+        k.color(255, 255, 255),
+        "ui",
+      ]);
+      k.loadSprite("background", "/gamebg.jpg").then(() => {
+        const bg = k.add([
+          k.sprite("background"),
+          k.pos(0, 0),
+          { origin: "topleft", speed: 7500, z: -1 }, // tutaj origin w obiekcie
+          // k.scale(k.width / 5600), // dopasowanie szerokości canvas
+        ]);
+        k.onUpdate(() => {
+          bg.move(-bg.speed * k.dt(), 0);
+          if (bg.pos.x <= -2520) bg.pos.x = 0;
+        });
+      });
+
+      function spawnBonus() {
+        const types = [
+          {
+            tag: "orangebox",
+            color: [125, 125, 0],
+            text: "+jump 7sec",
+            effect: (player) => {
+              setIsJumpPower(1200);
+              setTimeout(() => setIsJumpPower(600), 7000); // 7 sekund
+            },
+            duration: 2,
+          },
+          {
+            tag: "whitebox",
+            color: [244, 244, 244],
+            text: "+speed 7sec",
+            effect: (player) => {
+              setIsPlayerSpeed(450);
+              setTimeout(() => setIsPlayerSpeed(150), 7000);
+            },
+            duration: 2,
+          },
+          {
+            tag: "redbox",
+            color: [186, 0, 0],
+            text: "+size 5sec",
+            effect: (player) => {
+              player.scaleTo(2);
+              setTimeout(() => player.scaleTo(1), 5000);
+            },
+            duration: 2,
+          },
+        ];
+
+        const chosen = types[Math.floor(Math.random() * types.length)];
+
+        const box = k.add([
+          k.rect(60, 60),
+          k.pos(200 + Math.random() * 600, 0), // X 200–800, Y = 0
+          k.color(...chosen.color),
+          k.area(),
+          k.body(), // grawitacja
+          k.anchor("center"),
+          chosen.tag,
+        ]);
+
+        box.add([
+          k.text(chosen.text, { size: 16 }),
+          k.color(255, 255, 255),
+          k.anchor("center"),
+        ]);
+
+        // usuń po X sekundach, jeśli gracz nie zbierze
+        k.wait(chosen.duration, () => {
+          if (box.exists()) destroy(box);
+        });
+
+        // kolizja z graczem
+        player.onCollide(chosen.tag, () => {
+          destroy(box); // znika natychmiast
+          chosen.effect(player); // uruchom efekt
+        });
+
+        // zaplanuj kolejny bonus za 2–6 sekund
+        k.wait(4 + Math.random() * 5, () => {
+          spawnBonus();
+        });
+      }
+
+      // startujemy spawnowanie po x sekundach
+
+      k.wait(10, () => {
+        spawnBonus();
+      });
+
+      function spawnObstacles() {
+        // tutaj kod, który chcesz wykonać
+        const size = 30;
+        const x = 1200;
+        const y = 420 + Math.random() * (300 - size); // max 300px nad ziemią
+
+        const obstacle = k.add([
+          k.rect(size, size),
+          k.pos(x, y),
+          k.color(255, 0, 0),
+          k.area(),
+          k.body({ isStatic: true }), // statyczne, nie podlega grawitacji
+          "obstacle",
+          { speed: 200 }, // px/s w lewo
+        ]);
+
+        obstacle.onUpdate(() => {
+          obstacle.move(-obstacle.speed, 0);
+
+          // jeśli przeszkoda wyleci za ekran -> usuń
+          if (obstacle.pos.x + size < 0) {
+            destroy(obstacle);
+          }
+        });
+
+        player.onCollide("obstacle", (o) => {
+          if (!o.collected) {
+            // dodatkowa flaga, żeby nie liczyć wielokrotnie
+            player.lives -= 1;
+            livesLabel.text = `Lives: ${player.lives}`;
+            o.collected = true;
+            destroy(o);
+          }
+
+          if (player.lives <= 0) {
+            destroy(player);
+            // k.go("gameover");
+          }
+        });
+
+        // losowy czas 500–1200ms
+        const nextTime = 500 + Math.random() * 700;
+
+        setTimeout(spawnObstacles, nextTime);
+      }
+
+      // start
+      spawnObstacles();
       k.onKeyDown(
         "right",
         () => !player.dead && player.move(playerSpeedRef.current, 0)
@@ -193,7 +266,7 @@ function Game({ isOpen }) {
     }
   }, [isOpen]);
 
-  if (!data) return <h1>Loading API</h1>;
+  // if (!data) return <h1>Loading API</h1>;
 
   return <canvas ref={canvasRef} tabIndex={0} />;
 }
