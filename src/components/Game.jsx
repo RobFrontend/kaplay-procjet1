@@ -35,6 +35,15 @@ function Game({ isOpen }) {
     });
     kaplayRef.current = k;
 
+    k.loadSprite("background", "/gamebg.jpg").then(() => {
+      const bg1 = k.add([
+        k.sprite("background"),
+        k.pos(0, 0),
+        { origin: "topleft", z: -10 }, // tutaj origin w obiekcie
+        // k.scale(k.width / 5600), // dopasowanie szerokości canvas
+      ]);
+    });
+
     k.loadBean();
 
     // text
