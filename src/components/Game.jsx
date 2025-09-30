@@ -135,7 +135,7 @@ function Game({ isOpen }) {
             text: "+jump 7sec",
             effect: (player) => {
               setIsJumpPower(1200);
-              setTimeout(() => setIsJumpPower(600), 7000); // 7 sekund
+              setTimeout(() => setIsJumpPower(800), 7000); // 7 sekund
             },
             duration: 2,
           },
