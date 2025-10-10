@@ -117,12 +117,28 @@ function Game({ isOpen }) {
     });
 
     if (!isOpen) {
-      const livesLabel = k.add([
-        k.text("Lives: 3", { size: 24 }),
-        k.pos(20, 20),
-        k.color(255, 255, 255),
-        "ui",
-      ]);
+      // HEARTS - LIVES
+
+      k.loadSprite("heart", "/heart.png");
+      let hearts = [];
+      function renderHearts(lives) {
+        // delete old heart
+        hearts.forEach((h) => destroy(h));
+        hearts = [];
+
+        for (let i = 0; i < lives; i++) {
+          const heart = k.add([
+            k.sprite("heart"),
+            k.pos(20 + i * 40, 20), // każde serce przesunięte w prawo
+            k.scale(0.085),
+            "ui",
+          ]);
+          hearts.push(heart);
+        }
+      }
+      renderHearts(player.lives);
+
+      // BACKGROUND MOVING //
       k.loadSprite("background", "/gamebg.jpg").then(() => {
         const bg = k.add([
           k.sprite("background"),
@@ -136,57 +152,79 @@ function Game({ isOpen }) {
         });
       });
 
+      // SPAWN BONUSY //
+      k.loadSprite("bonusBig", "/BonusBig.png");
+      k.loadSprite("bonusJump", "/BonusJump.png");
+      k.loadSprite("bonusSpeed", "/BonusSpeed.png");
       function spawnBonus() {
         const types = [
           {
             tag: "orangebox",
-            color: [125, 125, 0],
-            text: "+jump 7sec",
+            sprite: "bonusJump",
             effect: (player) => {
               setIsJumpPower(1200);
               setTimeout(() => setIsJumpPower(800), 7000); // 7 sekund
             },
             duration: 2,
+            shape: "sprite",
           },
           {
             tag: "whitebox",
-            color: [244, 244, 244],
-            text: "+speed 7sec",
+            sprite: "bonusSpeed",
             effect: (player) => {
               setIsPlayerSpeed(450);
               setTimeout(() => setIsPlayerSpeed(150), 7000);
             },
             duration: 2,
+            shape: "sprite",
           },
           {
             tag: "redbox",
-            color: [186, 0, 0],
-            text: "+size 5sec",
+            sprite: "bonusBig",
             effect: (player) => {
               player.scaleTo(2);
-              setTimeout(() => player.scaleTo(1), 5000);
+              player.invincible = true;
+              setTimeout(() => {
+                player.invincible = false;
+                player.scaleTo(1);
+              }, 5000);
             },
             duration: 2,
+            shape: "sprite",
           },
         ];
 
         const chosen = types[Math.floor(Math.random() * types.length)];
 
-        const box = k.add([
-          k.rect(60, 60),
-          k.pos(200 + Math.random() * 600, 0), // X 200–800, Y = 0
-          k.color(...chosen.color),
-          k.area(),
-          k.body(), // grawitacja
-          k.anchor("center"),
-          chosen.tag,
-        ]);
+        let box;
 
-        box.add([
-          k.text(chosen.text, { size: 16 }),
-          k.color(255, 255, 255),
-          k.anchor("center"),
-        ]);
+        if (chosen.shape === "sprite") {
+          box = k.add([
+            k.sprite(chosen.sprite),
+            k.pos(200 + Math.random() * 600, 0),
+            k.area(),
+            k.body(),
+            k.anchor("center"),
+            chosen.tag,
+            k.scale(0.1), // możesz dostosować rozmiar BonusBig.png
+          ]);
+        } else {
+          box = k.add([
+            k.rect(60, 60),
+            k.pos(200 + Math.random() * 600, 0),
+            k.color(...chosen.color),
+            k.area(),
+            k.body(),
+            k.anchor("center"),
+            chosen.tag,
+          ]);
+
+          box.add([
+            k.text(chosen.text, { size: 16 }),
+            k.color(255, 255, 255),
+            k.anchor("center"),
+          ]);
+        }
 
         // usuń po X sekundach, jeśli gracz nie zbierze
         k.wait(chosen.duration, () => {
@@ -210,37 +248,44 @@ function Game({ isOpen }) {
       k.wait(10, () => {
         spawnBonus();
       });
+      //
 
+      // OBSTACLES //
+      k.loadSprite("obstacle", "/Obstacle.png");
       function spawnObstacles() {
-        // tutaj kod, który chcesz wykonać
-        const size = 30;
         const x = 1200;
-        const y = 420 + Math.random() * (300 - size); // max 300px nad ziemią
+        const y = 420 + Math.random() * (300 - 30); // max 300px nad ziemią
 
         const obstacle = k.add([
-          k.rect(size, size),
+          k.sprite("obstacle"),
           k.pos(x, y),
-          k.color(255, 0, 0),
           k.area(),
           k.body({ isStatic: true }), // statyczne, nie podlega grawitacji
+          k.scale(0.05), // dopasuj rozmiar obrazka do gry
           "obstacle",
-          { speed: 200 }, // px/s w lewo
+          { speed: 200 },
         ]);
 
         obstacle.onUpdate(() => {
           obstacle.move(-obstacle.speed, 0);
 
           // jeśli przeszkoda wyleci za ekran -> usuń
-          if (obstacle.pos.x + size < 0) {
+          if (obstacle.pos.x < -100) {
             destroy(obstacle);
           }
         });
+        //
 
+        // PLAYER COLIDE LIVES HEART MANAGEMENT //
         player.onCollide("obstacle", (o) => {
+          if (player.invincible) {
+            destroy(o); // przeszkoda znika, ale nic się nie dzieje
+            return;
+          }
+
           if (!o.collected) {
-            // dodatkowa flaga, żeby nie liczyć wielokrotnie
             player.lives -= 1;
-            livesLabel.text = `Lives: ${player.lives}`;
+            renderHearts(player.lives);
             o.collected = true;
             destroy(o);
           }
@@ -250,9 +295,10 @@ function Game({ isOpen }) {
             // k.go("gameover");
           }
         });
+        //
 
         // losowy czas 500–1200ms
-        const nextTime = 500 + Math.random() * 700;
+        const nextTime = 600 + Math.random() * 800;
 
         setTimeout(spawnObstacles, nextTime);
       }
